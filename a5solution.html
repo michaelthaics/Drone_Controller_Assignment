@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<input type="file" name="file" id="file">
+<body>
+
+<h1>Drone Flight Controller</h1>
+<p>Simple program to find a valid route. White cells are passable. Black cells are obstacles ( or buildings ). The grey cell is 
+   the starting cell. The green cell is the ending cell. The red arrow indicates the firs time a cell has been covered. Blue
+   arrows indicate the second time a cell has been covered. Orange arrows represent 3 or more times that a cell has been
+   covered. Buildings, grid size, and starting coordinates are all defined in the text file. Additional cells can be flown to
+   by using the simple GUI below and pressing the "traverse" button. </p>
+<h3> Appropriate name for x-coordinate here <h3>
+<input type = "text" id = "inputone"/>
+<h3> Appropriate name for y-coordinate here <h3>
+<input type = "text" id = "inputtwo"/>
+<button id = "b1">Traverse</button>
+    
+    
+<canvas id="myCanvas" width="4000" height="4000" style="border:5px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+/* NOTE: change the canvas dimensions to 50 times the width and height of the grid */
+    
+/* variables to control the location of the grid */ 
+var m; //x-dimension
+var n; //y-dimension
+var xCurrent;
+var yCurrent;
+var campusGrid;
+
+
+    
+/* Function: initializeGrid()
+ * 
+ * A function which takes the declared 2d array
+ * and gives each element in the array a value of 1
+ * This denotes a cell with no obstacles
+ */
+function initializeGrid (campusGrid) {    
+    
+    for (i = 0; i < m ; i++){
+        
+        for (j = 0; j < n ; j++){
+            
+            campusGrid[i][j] = 1; 
+            
+        } 
+    }
+
+}
+
+/* Function: drawBuildings(x1,x2,y1,y2)
+ * 
+ * Parameters: 
+ * x1 - starting x coordinate of the building 
+ * x2 - ending x coordinate of the building
+ * y1/y2 - same as the former two, but for the y coordinate
+ * 
+ * This function adds an obstacle to the 2d grid
+ * with the coordinates taken from the parameters
+ */
+function drawBuildings(campusGrid,x1,x2,y1,y2) {
+    
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");   
+    
+    for (i = x1; i <= x2; i++){  
+        
+        for (j = y1; j <= y2; j++){
+            
+            campusGrid[i][j] = 0;    
+            ctx.fillStyle = "black";
+            ctx.fillRect(50*i, 50*j, 50, 50);
+            
+        }
+    }
+
+    /* You are to change this for loop to add a building */ 
+    for (i = 18; i <= 19; i++){  
+        
+        for (j = 0; j <= 1; j++){
+            
+            campusGrid[i][j] = 0;    
+            ctx.fillStyle = "black";
+            ctx.fillRect(50*i, 50*j, 50, 50);
+            
+        }
+    } 
+    
+    for (i = 19; i <= 19; i++){  
+        
+        for (j = 9; j <= 9; j++){
+            
+            campusGrid[i][j] = 0;    
+            ctx.fillStyle = "black";
+            ctx.fillRect(50*i, 50*j, 50, 50);
+            
+        }
+    }     
+
+    
+}
+
+/* Function : drawGrid()
+ * 
+ * This function draws every individual cell for the 2d grid 
+ */ 
+function drawGrid (campusGrid) {    
+    
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+    
+    for (i = 0; i < m ; i++){
+        for (j = 0; j < n ; j++){     
+            
+            if ( campusGrid[i][j] > 0 ){
+                
+                ctx.beginPath();
+                ctx.lineWidth = "4";
+                ctx.strokeStyle = "black";
+                ctx.rect(50*i, 50*j, 50, 50);
+                ctx.stroke();
+                
+            }   
+        } 
+    }
+}
+
+/* Function: drawPath(x,y)
+ * 
+ * Parameters:
+ * x - X coordinate of the cell to be filled
+ * y - Y coordinate of the cell to be filled
+ * 
+ * This function is a helper function for traverse()
+ * If a valid path is found in traverse() then it will
+ * fill in the cell with the colour yellow
+ */
+function drawPath(campusGrid, x, y, direction) {
+    
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");  
+    ctx.lineWidth = 1;
+    
+    if ( campusGrid[x][y] == 1 ){
+    
+        ctx.strokeStyle = "red";
+   
+    }else if (campusGrid[x][y] == 2){
+    
+        ctx.strokeStyle = "blue";
+        
+    }else{
+    
+        ctx.strokeStyle = "orange";
+    
+    }
+    
+    if (direction == "up"){
+    
+        /* code to draw an up arrow */ 
+        ctx.beginPath();
+        ctx.moveTo(25+50*x,5+50*y);
+        ctx.lineTo(25+50*x,45+50*y);
+        ctx.moveTo(25+50*x,5+50*y);
+        ctx.lineTo(20+50*x,15+50*y);
+        ctx.moveTo(25+50*x,5+50*y);
+        ctx.lineTo(30+50*x,15+50*y);
+        ctx.stroke();    
+        
+    }else if (direction == "right"){
+    
+        /* code to draw a right arrow */ 
+        ctx.beginPath();
+        ctx.moveTo(5+50*x,25+50*y);
+        ctx.lineTo(45+50*x,25+50*y);
+        ctx.moveTo(45+50*x,25+50*y);
+        ctx.lineTo(35+50*x,20+50*y);
+        ctx.moveTo(45+50*x,25+50*y);
+        ctx.lineTo(35+50*x,30+50*y);
+        ctx.stroke();  
+        
+    }else if (direction == "left"){
+    
+        /* code to draw a left arrow */ 
+        ctx.beginPath();
+        ctx.moveTo(5+50*x,25+50*y);
+        ctx.lineTo(45+50*x,25+50*y);
+        ctx.moveTo(5+50*x,25+50*y);
+        ctx.lineTo(15+50*x,20+50*y);
+        ctx.moveTo(5+50*x,25+50*y);
+        ctx.lineTo(15+50*x,30+50*y);
+        ctx.stroke();  
+    
+    }else if (direction == "down"){
+    
+        /* code to draw a down arrow */ 
+        ctx.beginPath();
+        ctx.moveTo(25+50*x,5+50*y);
+        ctx.lineTo(25+50*x,45+50*y);
+        ctx.moveTo(25+50*x,45+50*y);
+        ctx.lineTo(20+50*x,35+50*y);
+        ctx.moveTo(25+50*x,45+50*y);
+        ctx.lineTo(30+50*x,35+50*y);
+        ctx.stroke();       
+    
+    }
+    
+
+    
+    
+}
+
+/* Function: traverse(x1,y1,x2,y2)
+ * 
+ * Parameters:
+ * x1/y1 - x/y coordinate of the starting cell on the grid
+ * x2/y2 - x/y coordinate of the ending cell on the grid
+ * 
+ * This function attempts to find a valid path from the starting 
+ * cell to the ending cell on the grid.
+ */
+function traverse (campusGrid,x1,y1,x2,y2){
+
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d"); 
+
+    var xStart = x1;
+    var yStart = y1;    
+    
+    var xEnd = x2;
+    var yEnd = y2;   
+    
+ 
+    if ( ( campusGrid[xEnd][yEnd] > 0 )&&( campusGrid[xStart][yStart] > 0) ){
+    
+        /* colour the cell where takeoff happens as grey */ 
+        ctx.fillStyle = "grey";
+        ctx.fillRect(50*xStart, 50*yStart, 50, 50);  
+    
+        /* Keep going until ending cell is reached */ 
+        while ( (xEnd != xStart)||(yEnd != yStart) ){
+        
+            var moveFlag = 0; //flag to see if a move was made this iteration
+            
+            /* if destination is right and down */ 
+            if ( (xEnd > xStart)&&(yEnd > yStart) ) {
+                
+                /* try right */ 
+                if (campusGrid[xStart+1][yStart] > 0){
+                                      
+                    drawPath(campusGrid, xStart, yStart, "right");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart + 1;
+                    moveFlag = 1;
+                    
+                }
+                /* try down */ 
+                if (campusGrid[xStart][yStart+1] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "down");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart + 1;
+                    moveFlag = 1;
+
+                
+                }
+            /* if destination is left and down */ 
+            }else if ( (xEnd < xStart)&&(yEnd > yStart) ) {
+                
+                /* try left */ 
+                if (campusGrid[xStart-1][yStart] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "left");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart - 1;
+                    moveFlag = 1;
+
+                    
+                }
+                /* try down */ 
+                if (campusGrid[xStart][yStart+1] > 0){
+                
+                    drawPath(campusGrid, xStart, yStart, "down");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart + 1;
+                    moveFlag = 1;
+
+                
+                }                
+            /*  if destination is right and up */ 
+            }else if ( (xEnd > xStart)&&(yEnd < yStart) ){
+            
+                /* try right */ 
+                if (campusGrid[xStart+1][yStart] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "right");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart + 1;
+                    moveFlag = 1;
+                    
+                }
+                /* try up */ 
+                if (campusGrid[xStart][yStart-1] > 0){
+                
+                    drawPath(campusGrid, xStart, yStart, "up");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart - 1;
+                    moveFlag = 1;
+                
+                }
+            /*  if destination is left and up */ 
+            }else if ( (xEnd < xStart)&&(yEnd < yStart) ){
+            
+                /* try left */ 
+                if (campusGrid[xStart-1][yStart] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "left");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart - 1;
+                    moveFlag = 1;
+
+                    
+                }
+                /* try up */ 
+                if (campusGrid[xStart][yStart-1] > 0){
+                
+                    drawPath(campusGrid, xStart, yStart, "up");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart - 1;
+                    moveFlag = 1;
+                
+                }                   
+            /* if destination is just right */ 
+            }else if ( (xEnd > xStart)&&(yEnd == yStart) ){
+                
+                if (campusGrid[xStart+1][yStart] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "right");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart + 1;
+                    moveFlag = 1;
+                    
+                }else{
+                
+                    var index = 0;
+
+                    while (moveFlag == 0){
+                        
+                        index++;
+                        
+                        if ( (campusGrid[xStart+1][yStart+index] > 0)&&(yStart+index < n)){
+                            
+                            for (i = yStart; i < yStart+index; i++){
+                            
+                                drawPath(campusGrid, xStart, i, "down");
+                                campusGrid[xStart][i]++;
+                            
+                            }
+                            
+                            yStart = yStart + index;
+                            drawPath(campusGrid, xStart, yStart, "right");
+                            campusGrid[xStart][yStart]++;
+                            xStart = xStart + 1;
+                            moveFlag = 1;
+                          
+                            
+                        }
+                        if ( (campusGrid[xStart+1][yStart-index] > 0)&&(yStart-index >= 0)){
+
+                            for (i = yStart-index+1; i <= yStart; i++){
+                            
+                                drawPath(campusGrid, xStart, i, "up");
+                                campusGrid[xStart][i]++;
+                            
+                            }                        
+                            yStart = yStart - index;
+                            drawPath(campusGrid, xStart,yStart, "right");
+                            campusGrid[xStart][yStart]++;
+                            xStart = xStart + 1;
+                            moveFlag = 1;
+                            
+                        }                        
+                    
+                    }
+                
+                }
+            /* If destination is just up */    
+            }else if ( (xEnd == xStart)&&(yEnd < yStart) ){
+            
+                if (campusGrid[xStart][yStart-1] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "up");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart - 1;
+                    moveFlag = 1;    
+                    
+                }else{
+                
+                    var index = 0;
+
+                    while (moveFlag == 0){
+                        
+                        index++;
+                        
+                        if ( (campusGrid[xStart+index][yStart-1] > 0)&&(xStart+index < m)){
+                            
+                            for (i = xStart; i < xStart+index; i++){
+                            
+                                drawPath(campusGrid, i, yStart, "right");
+                                campusGrid[i][yStart]++;
+                            
+                            }
+                            
+                            xStart = xStart + index;
+                            drawPath(campusGrid, xStart, yStart, "up");
+                            campusGrid[xStart][yStart]++;
+                            yStart = yStart - 1;
+                            moveFlag = 1;
+                          
+                            
+                        }
+                        if ( (campusGrid[xStart-index][yStart-1] > 0)&&(xStart-index >= 0)){
+
+                            for (i = xStart-index+1; i <= xStart; i++){
+                            
+                                drawPath(campusGrid, i, yStart, "left");
+                                campusGrid[i][yStart]++;
+                            
+                            }                        
+                            xStart = xStart - index;
+                            drawPath(campusGrid, xStart,yStart, "up");
+                            campusGrid[xStart][yStart]++;
+                            yStart = yStart - 1;
+                            moveFlag = 1;
+                            
+                        }                        
+                    
+                    }
+                
+                } 
+            /* if destination is just down */         
+            }else if ( (xEnd == xStart)&&(yEnd > yStart) ){
+            
+                if (campusGrid[xStart][yStart+1] > 0){
+                    
+                    drawPath(campusGrid, xStart, yStart, "down");
+                    campusGrid[xStart][yStart]++;
+                    yStart = yStart + 1;
+                    moveFlag = 1;    
+                    
+                }else{
+                
+                    var index = 0;
+
+                    while (moveFlag == 0){
+                        
+                        index++;
+                        
+                        if ( (campusGrid[xStart+index][yStart+1] > 0)&&(xStart+index < m)){
+                            
+                            for (i = xStart; i < xStart+index; i++){
+                            
+                                drawPath(campusGrid, i, yStart, "right");
+                                campusGrid[i][yStart]++;
+                            
+                            }
+                            
+                            xStart = xStart + index;
+                            drawPath(campusGrid, xStart, yStart, "down");
+                            campusGrid[xStart][yStart]++;
+                            yStart = yStart + 1;
+                            moveFlag = 1;
+                          
+                            
+                        }
+                        if ( (campusGrid[xStart-index][yStart+1] > 0)&&(xStart-index >= 0)){
+
+                            for (i = xStart-index+1; i <= xStart; i++){
+                            
+                                drawPath(campusGrid, i, yStart, "left");
+                                campusGrid[i][yStart]++;
+                            
+                            }                        
+                            xStart = xStart - index;
+                            drawPath(campusGrid, xStart,yStart, "down");
+                            campusGrid[xStart][yStart]++;
+                            yStart = yStart + 1;
+                            moveFlag = 1;
+                            
+                        }                        
+                    
+                    }
+                
+                } 
+            /* if destination is just left */         
+            }else if ( (xEnd < xStart)&&(yEnd == yStart) ){
+                
+                if (campusGrid[xStart-1][yStart] > 0){
+                                       
+                    drawPath(campusGrid, xStart, yStart, "left");
+                    campusGrid[xStart][yStart]++;
+                    xStart = xStart - 1;
+                    moveFlag = 1;
+                    
+                }else{
+                
+                    var index = 0;
+
+                    while (moveFlag == 0){
+                        
+                        index++;
+                        
+                        if ( (campusGrid[xStart-1][yStart+index] > 0)&&(yStart+index < n)){
+                            
+                            for (i = yStart; i < yStart+index; i++){
+                            
+                                drawPath(campusGrid, xStart, i, "down");
+                                campusGrid[xStart][i]++;
+                            
+                            }
+                            
+                            
+                            yStart = yStart + index;
+                            drawPath(campusGrid, xStart, yStart, "left");
+                            campusGrid[xStart][yStart]++;
+                            xStart = xStart - 1;
+                            moveFlag = 1;
+                          
+                            
+                        }
+                        if ( (campusGrid[xStart-1][yStart-index] > 0)&&(yStart-index >= 0)){
+
+                            for (i = yStart-index+1; i <= yStart; i++){
+                            
+                                drawPath(campusGrid, xStart, i, "up");
+                                campusGrid[xStart][i]++;
+                            
+                            }                        
+                            yStart = yStart - index;
+                            drawPath(campusGrid, xStart,yStart, "left");
+                            campusGrid[xStart][yStart]++;
+                            xStart = xStart - 1;
+                            moveFlag = 1;
+                            
+                        }                        
+                    
+                    }
+                
+                }
+            }
+            if ( (yStart == yEnd)&&(xStart == xEnd) ){
+                
+                /* Add green destination */ 
+                ctx.fillStyle = "green";
+                ctx.fillRect(50*xStart, 50*yStart, 50, 50); 
+                xCurrent = xEnd;
+                yCurrent = yEnd;
+
+            
+            }
+            
+            
+            if (moveFlag != 1){ //Used to show where the program fails to make a move and gets stuck
+            
+                ctx.fillStyle = "purple";
+                ctx.fillRect(50*xStart, 50*yStart, 50, 50);  
+                xStart = xEnd;
+                yStart = yEnd;
+            
+            }
+            console.log("AFTER INSTRUCTIONS X: " + xStart +"|" + xEnd + "   Y: " + yStart + "|" + yEnd);
+           
+       }
+    }
+    
+}
+
+
+document.getElementById('file').onchange = function(){
+
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d"); 
+    ctx.clearRect(0, 0, 1000, 500);    
+    
+    var file = this.files[0];
+
+    var reader = new FileReader();
+    reader.onload = function(progressEvent){
+
+    //Read File By lines
+    var lines = this.result.split('\n');    
+    
+    var dimensions = lines[0].split(",");
+    
+    /* NOTE: change the canvas dimensions to 50 times the width and height of the grid */
+    m = dimensions[0]; //width
+    n = dimensions[1]; //height
+
+        /* Initialize the 2d array*/    
+    campusGrid = new Array (n);
+    for (i = 0; i < m; i++){
+        
+            campusGrid[i] = new Array(m);
+            
+    }    
+    
+    initializeGrid(campusGrid);
+        
+    for(var line = 2; line < lines.length; line++){
+
+        var coordinates = lines[line].split(",");
+
+        drawBuildings(campusGrid, parseInt(coordinates[0]), parseInt(coordinates[1]), parseInt(coordinates[2]), parseInt(coordinates[3]));
+        drawGrid(campusGrid);
+        
+    }
+    var coordinates = lines[1].split(",");
+    traverse(campusGrid, parseInt(coordinates[0]), parseInt(coordinates[1]), parseInt(coordinates[2]), parseInt(coordinates[3]));
+    
+  };
+  reader.readAsText(file);
+};
+
+/* add b1.onclick function to create functionality for the button */ 
+b1.onclick = function(){
+    if ((0 <= parseInt(document.getElementById('inputone').value) <= m)&&(0 <= parseInt(document.getElementById('inputtwo').value)<=n)){
+        traverse(campusGrid, xCurrent, yCurrent, parseInt(document.getElementById('inputone').value), parseInt(document.getElementById('inputtwo').value));
+    }
+};
+
+</script>
+ 
+
+
+
+
+</body>
+</html>    

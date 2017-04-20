@@ -1,0 +1,13 @@
+20,10, <---- Dimensions of the grid 
+0,0,14,7,<---- starting X/Y coordinates, ending X/Y coordinates
+1,4,1,3, <---- NOTE: as long as you have 4 coordinates and an extra ending comma, you can add whatever you want here for comments
+1,2,6,8, <---- This is the bottom left building
+6,7,3,5,
+9,10,7,9,
+6,7,7,7,
+9,9,4,5,
+9,11,0,2,
+12,14,8,9, <---- This is Thornborough of the bottom right building(s) although they both look like one long rectangle
+15,17,8,9, <---- This is Richards of the bottom right building(s)
+13,16,4,5,
+14,15,0,2,
